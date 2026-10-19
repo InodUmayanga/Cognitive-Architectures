@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5-Block CNN Architecture Animation (224x224x3 to Dense Network)</title>
+  <style>
+    :root {
+      --bg-dark: #0b1020;
+      --bg-card: #131b33;
+      --bg-panel: #192342;
+      --accent-blue: #38bdf8;
+      --accent-cyan: #22d3ee;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #152042 0%, #090d1a 100%);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 24px;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #38bdf8, #a855f7, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.14);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      border-color: transparent;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.12);
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-panel);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* Stage Pills Bar */
+    .stage-bar {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+    }
+
+    .stage-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage-pill.active {
+      border-color: var(--accent-cyan);
+      background: rgba(34, 211, 238, 0.12);
+      box-shadow: 0 0 18px rgba(34, 211, 238, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .stage-pill .name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stage-pill .dims {
+      font-size: 0.72rem;
+      color: var(--accent-blue);
+      margin-top: 3px;
+      font-family: "SF Mono", Menlo, monospace;
+    }
+
+    .stage-pill .sub-badge {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 0.66rem;
+      padding: 2px 6px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+    }
+
+    .stage-pill.active .sub-badge {
+      background: var(--accent-cyan);
+      color: #090d1a;
+      font-weight: 700;
+    }
+
+    /* Main Visual Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 510px;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .panel-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-family: "SF Mono", Menlo, monospace;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    canvas {
+      width: 100%;
+      flex: 1;
+      background: #0d1326;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .info-box {
+      background: var(--bg-panel);
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent-cyan);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-box .step-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-box .step-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .math-bar {
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--accent-amber);
+      background: rgba(0, 0, 0, 0.28);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .substep-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .substep-tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 6px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .substep-tab.active-conv {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--accent-blue);
+      border-color: var(--accent-blue);
+    }
+
+    .substep-tab.active-relu {
+      background: rgba(244, 63, 94, 0.18);
+      color: var(--accent-rose);
+      border-color: var(--accent-rose);
+    }
+
+    .substep-tab.active-pool {
+      background: rgba(16, 185, 129, 0.18);
+      color: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+      .stage-bar {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-group">
+      <h1>Convolutional Neural Network (CNN) — 5-Block Moving Architecture</h1>
+      <p>224×224×3 RGB Input → 5 Blocks of [Conv2D → ReLU → 2×2 Max Pooling] → Flatten (25,088) → Dense Neural Network</p>
+    </div>
+    <div class="controls">
+      <button id="prevBtn" title="Previous Sub-step">⏮ Prev</button>
+      <button id="playPauseBtn" class="primary">⏸ Pause</button>
+      <button id="nextBtn" title="Next Sub-step">Next ⏭</button>
+      <button id="resetBtn">↺ Restart</button>
+      <div class="speed-control">
+        <span>Speed:</span>
+        <input type="range" id="speedRange" min="0.4" max="2.5" step="0.1" value="1.0" />
+        <span id="speedVal">1.0×</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="stage-bar" id="stageBar"></div>
+
+  <div class="main-grid">
+    <!-- Left Panel: 3D Architecture & Feature Volume Progression -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>3D Feature Map Volume Pipeline (Spatial Size vs. Channel Depth)</h2>
+        <span class="badge" id="pipelineBadge">Input: 224 × 224 × 3</span>
+      </div>
+      <canvas id="pipelineCanvas" width="860" height="400"></canvas>
+      <div class="info-box">
+        <div class="step-title">
+          <span id="stageTitle">Input RGB Image (224 × 224 × 3)</span>
+          <span id="tensorShapeText" style="color: var(--accent-cyan); font-family: monospace;">Tensor: [224, 224, 3]</span>
+        </div>
+        <div class="step-desc" id="stageDesc">
+          Raw 224×224 pixel image split across 3 color channels (Red, Green, Blue). Watch the tensor travel through 5 convolutional blocks as spatial height & width halve (224 → 112 → 56 → 28 → 14 → 7) while feature depth expands (3 → 64 → 128 → 256 → 512 → 512).
+        </div>
+        <div class="math-bar" id="mathFormula">
+          Output Spatial Size: H_out = ⌊(H_in + 2P - K) / S⌋ + 1
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Micro-Step Operation Animator (Conv / ReLU / MaxPool / Flatten / Dense) -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2 id="microHeader">Live Layer Operation View</h2>
+        <span class="badge" id="opBadge">RGB Channels</span>
+      </div>
+      <div class="substep-tabs" id="substepTabs">
+        <div class="substep-tab" id="tabConv">1. Conv2D (3×3 Filter)</div>
+        <div class="substep-tab" id="tabRelu">2. ReLU max(0, x)</div>
+        <div class="substep-tab" id="tabPool">3. Max Pooling (2×2)</div>
+      </div>
+      <canvas id="microCanvas" width="540" height="400"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const STAGES = [
+      {
+        id: 'input',
+        groupIndex: 0,
+        groupName: 'Input RGB',
+        shortDim: '224×224×3',
+        subType: 'input',
+        opLabel: 'RGB Image Tensor',
+        title: 'Input Image — 224 × 224 × 3 (RGB Channels)',
+        tensor: '224 × 224 × 3',
+        inH: 224, inW: 224, inC: 3,
+        outH: 224, outW: 224, outC: 3,
+        desc: 'The network receives a 224×224 RGB image consisting of 3 color planes (Red, Green, Blue) with pixel intensities normalized for feature extraction.',
+        math: 'X ∈ ℝ^(224 × 224 × 3) | Total values = 150,528'
+      },
+      // BLOCK 1
+      {
+        id: 'b1_conv',
+        groupIndex: 1,
+        groupName: 'Block 1',
+        shortDim: '112×112×64',
+        subType: 'conv',
+        opLabel: 'Block 1: Conv2D (64 filters)',
+        title: 'Block 1 — Step 1: 3×3 Convolution (Depth 3 → 64)',
+        tensor: '224 × 224 × 64',
+        inH: 224, inW: 224, inC: 3,
+        outH: 224, outW: 224, outC: 64,
+        desc: '64 learnable 3×3×3 kernels slide across the 224×224×3 input (padding=1, stride=1), extracting low-level edges, gradients, and color blobs.',
+        math: 'Conv2D(in=3, out=64, kernel=3×3, pad=1, stride=1) → 224 × 224 × 64'
+      },
+      {
+        id: 'b1_relu',
+        groupIndex: 1,
+        groupName: 'Block 1',
+        shortDim: '112×112×64',
+        subType: 'relu',
+        opLabel: 'Block 1: ReLU Activation',
+        title: 'Block 1 — Step 2: ReLU Activation f(x) = max(0, x)',
+        tensor: '224 × 224 × 64',
+        inH: 224, inW: 224, inC: 64,
+        outH: 224, outW: 224, outC: 64,
+        desc: 'Element-wise Rectified Linear Unit (ReLU) sets all negative feature activations to zero, introducing non-linearity while keeping positive edge responses.',
+        math: 'ReLU(x) = max(0, x) | Shape unchanged: 224 × 224 × 64'
+      },
+      {
+        id: 'b1_pool',
+        groupIndex: 1,
+        groupName: 'Block 1',
+        shortDim: '112×112×64',
+        subType: 'pool',
+        opLabel: 'Block 1: 2×2 MaxPool',
+        title: 'Block 1 — Step 3: 2×2 Max Pooling (224×224 → 112×112)',
+        tensor: '112 × 112 × 64',
+        inH: 224, inW: 224, inC: 64,
+        outH: 112, outW: 112, outC: 64,
+        desc: 'A 2×2 window slides with stride 2 across each of the 64 channels, keeping only the maximum activation in each 2×2 patch and halving spatial width & height.',
+        math: 'MaxPool2D(kernel=2×2, stride=2): ⌊224 / 2⌋ = 112 → 112 × 112 × 64'
+      },
+      // BLOCK 2
+      {
+        id: 'b2_conv',
+        groupIndex: 2,
+        groupName: 'Block 2',
+        shortDim: '56×56×128',
+        subType: 'conv',
+        opLabel: 'Block 2: Conv2D (128 filters)',
+        title: 'Block 2 — Step 1: 3×3 Convolution (Depth 64 → 128)',
+        tensor: '112 × 112 × 128',
+        inH: 112, inW: 112, inC: 64,
+        outH: 112, outW: 112, outC: 128,
+        desc: '128 filters combine low-level edges from Block 1 into corners, curves, and simple textures while maintaining the 112×112 spatial grid.',
+        math: 'Conv2D(in=64, out=128, kernel=3×3, pad=1, stride=1) → 112 × 112 × 128'
+      },
+      {
+        id: 'b2_relu',
+        groupIndex: 2,
+        groupName: 'Block 2',
+        shortDim: '56×56×128',
+        subType: 'relu',
+        opLabel: 'Block 2: ReLU Activation',
+        title: 'Block 2 — Step 2: ReLU Activation f(x) = max(0, x)',
+        tensor: '112 × 112 × 128',
+        inH: 112, inW: 112, inC: 128,
+        outH: 112, outW: 112, outC: 128,
+        desc: 'ReLU zeroes out negative responses across all 128 channels so only active texture/corner features propagate forward.',
+        math: 'ReLU(x) = max(0, x) | Shape unchanged: 112 × 112 × 128'
+      },
+      {
+        id: 'b2_pool',
+        groupIndex: 2,
+        groupName: 'Block 2',
+        shortDim: '56×56×128',
+        subType: 'pool',
+        opLabel: 'Block 2: 2×2 MaxPool',
+        title: 'Block 2 — Step 3: 2×2 Max Pooling (112×112 → 56×56)',
+        tensor: '56 × 56 × 128',
+        inH: 112, inW: 112, inC: 128,
+        outH: 56, outW: 56, outC: 128,
+        desc: '2×2 Max Pooling downsamples the spatial resolution from 112×112 to 56×56, increasing translation invariance and receptive field size.',
+        math: 'MaxPool2D(kernel=2×2, stride=2): ⌊112 / 2⌋ = 56 → 56 × 56 × 128'
+      },
+      // BLOCK 3
+      {
+        id: 'b3_conv',
+        groupIndex: 3,
+        groupName: 'Block 3',
+        shortDim: '28×28×256',
+        subType: 'conv',
+        opLabel: 'Block 3: Conv2D (256 filters)',
+        title: 'Block 3 — Step 1: 3×3 Convolution (Depth 128 → 256)',
+        tensor: '56 × 56 × 256',
+        inH: 56, inW: 56, inC: 128,
+        outH: 56, outW: 56, outC: 256,
+        desc: 'Filter depth doubles to 256 channels, capturing mid-level motifs, repeating patterns, and object parts across the 56×56 feature map.',
+        math: 'Conv2D(in=128, out=256, kernel=3×3, pad=1, stride=1) → 56 × 56 × 256'
+      },
+      {
+        id: 'b3_relu',
+        groupIndex: 3,
+        groupName: 'Block 3',
+        shortDim: '28×28×256',
+        subType: 'relu',
+        opLabel: 'Block 3: ReLU Activation',
+        title: 'Block 3 — Step 2: ReLU Activation f(x) = max(0, x)',
+        tensor: '56 × 56 × 256',
+        inH: 56, inW: 56, inC: 256,
+        outH: 56, outW: 56, outC: 256,
+        desc: 'Applies non-linear thresholding across all 256 feature maps, eliminating negative pre-activations.',
+        math: 'ReLU(x) = max(0, x) | Shape unchanged: 56 × 56 × 256'
+      },
+      {
+        id: 'b3_pool',
+        groupIndex: 3,
+        groupName: 'Block 3',
+        shortDim: '28×28×256',
+        subType: 'pool',
+        opLabel: 'Block 3: 2×2 MaxPool',
+        title: 'Block 3 — Step 3: 2×2 Max Pooling (56×56 → 28×28)',
+        tensor: '28 × 28 × 256',
+        inH: 56, inW: 56, inC: 256,
+        outH: 28, outW: 28, outC: 256,
+        desc: 'Spatial dimensions halve again from 56×56 to 28×28 while preserving the strongest activations in each 2×2 neighborhood.',
+        math: 'MaxPool2D(kernel=2×2, stride=2): ⌊56 / 2⌋ = 28 → 28 × 28 × 256'
+      },
+      // BLOCK 4
+      {
+        id: 'b4_conv',
+        groupIndex: 4,
+        groupName: 'Block 4',
+        shortDim: '14×14×512',
+        subType: 'conv',
+        opLabel: 'Block 4: Conv2D (512 filters)',
+        title: 'Block 4 — Step 1: 3×3 Convolution (Depth 256 → 512)',
+        tensor: '28 × 28 × 512',
+        inH: 28, inW: 28, inC: 256,
+        outH: 28, outW: 28, outC: 512,
+        desc: '512 convolutional filters extract high-level semantic parts (such as wheels, eyes, foliage, or geometric structures) on the 28×28 grid.',
+        math: 'Conv2D(in=256, out=512, kernel=3×3, pad=1, stride=1) → 28 × 28 × 512'
+      },
+      {
+        id: 'b4_relu',
+        groupIndex: 4,
+        groupName: 'Block 4',
+        shortDim: '14×14×512',
+        subType: 'relu',
+        opLabel: 'Block 4: ReLU Activation',
+        title: 'Block 4 — Step 2: ReLU Activation f(x) = max(0, x)',
+        tensor: '28 × 28 × 512',
+        inH: 28, inW: 28, inC: 512,
+        outH: 28, outW: 28, outC: 512,
+        desc: 'ReLU sparsifies the 512 semantic feature channels so only detected object parts remain active.',
+        math: 'ReLU(x) = max(0, x) | Shape unchanged: 28 × 28 × 512'
+      },
+      {
+        id: 'b4_pool',
+        groupIndex: 4,
+        groupName: 'Block 4',
+        shortDim: '14×14×512',
+        subType: 'pool',
+        opLabel: 'Block 4: 2×2 MaxPool',
+        title: 'Block 4 — Step 3: 2×2 Max Pooling (28×28 → 14×14)',
+        tensor: '14 × 14 × 512',
+        inH: 28, inW: 28, inC: 512,
+        outH: 14, outW: 14, outC: 512,
+        desc: '2×2 Max Pooling compresses the 28×28 feature maps down to 14×14×512.',
+        math: 'MaxPool2D(kernel=2×2, stride=2): ⌊28 / 2⌋ = 14 → 14 × 14 × 512'
+      },
+      // BLOCK 5
+      {
+        id: 'b5_conv',
+        groupIndex: 5,
+        groupName: 'Block 5',
+        shortDim: '7×7×512',
+        subType: 'conv',
+        opLabel: 'Block 5: Conv2D (512 filters)',
+        title: 'Block 5 — Step 1: 3×3 Convolution (Depth 512 → 512)',
+        tensor: '14 × 14 × 512',
+        inH: 14, inW: 14, inC: 512,
+        outH: 14, outW: 14, outC: 512,
+        desc: 'The 5th convolutional block refines whole-object semantic representations across 512 channels with a large effective receptive field.',
+        math: 'Conv2D(in=512, out=512, kernel=3×3, pad=1, stride=1) → 14 × 14 × 512'
+      },
+      {
+        id: 'b5_relu',
+        groupIndex: 5,
+        groupName: 'Block 5',
+        shortDim: '7×7×512',
+        subType: 'relu',
+        opLabel: 'Block 5: ReLU Activation',
+        title: 'Block 5 — Step 2: ReLU Activation f(x) = max(0, x)',
+        tensor: '14 × 14 × 512',
+        inH: 14, inW: 14, inC: 512,
+        outH: 14, outW: 14, outC: 512,
+        desc: 'Final convolutional ReLU non-linearity filters out negative activations before the last spatial pooling step.',
+        math: 'ReLU(x) = max(0, x) | Shape unchanged: 14 × 14 × 512'
+      },
+      {
+        id: 'b5_pool',
+        groupIndex: 5,
+        groupName: 'Block 5',
+        shortDim: '7×7×512',
+        subType: 'pool',
+        opLabel: 'Block 5: 2×2 MaxPool',
+        title: 'Block 5 — Step 3: 2×2 Max Pooling (14×14 → 7×7)',
+        tensor: '7 × 7 × 512',
+        inH: 14, inW: 14, inC: 512,
+        outH: 7, outW: 7, outC: 512,
+        desc: 'Final 2×2 Max Pooling reduces spatial size to 7×7 across 512 channels, completing the 5-block convolutional feature extractor.',
+        math: 'MaxPool2D(kernel=2×2, stride=2): ⌊14 / 2⌋ = 7 → 7 × 7 × 512'
+      },
+      // FLATTEN
+      {
+        id: 'flatten',
+        groupIndex: 6,
+        groupName: 'Flatten',
+        shortDim: '25,088 × 1',
+        subType: 'flatten',
+        opLabel: 'Flatten 3D → 1D Vector',
+        title: 'Flatten Layer — Unrolling 7 × 7 × 512 into 25,088 × 1',
+        tensor: '25,088 × 1',
+        inH: 7, inW: 7, inC: 512,
+        outH: 25088, outW: 1, outC: 1,
+        desc: 'Every cell of the 7×7×512 3D volume is unrolled sequentially into a single 1D column vector of 25,088 features so it can feed into standard Dense layers.',
+        math: 'Flatten: 7 × 7 × 512 = 25,088 scalar inputs'
+      },
+      // DENSE NEURAL NETWORK
+      {
+        id: 'dense',
+        groupIndex: 7,
+        groupName: 'Dense NN',
+        shortDim: '4096→4096→Out',
+        subType: 'dense',
+        opLabel: 'Fully Connected + Softmax',
+        title: 'Dense Neural Network — 25,088 → 4096 → 4096 → Class Probabilities',
+        tensor: '1000 Classes (Softmax)',
+        inH: 25088, inW: 1, inC: 1,
+        outH: 1000, outW: 1, outC: 1,
+        desc: 'Fully connected (Dense) layers apply learned weight matrices W·x + b + ReLU across all 25,088 features, ending with a Softmax layer that outputs class probabilities.',
+        math: 'Dense(25088→4096, ReLU) → Dense(4096→4096, ReLU) → Softmax(1000)'
+      }
+    ];
+
+    const GROUPS = [
+      { name: 'Input RGB', dims: '224×224×3', firstStep: 0 },
+      { name: 'Block 1', dims: '224→112 × 64', firstStep: 1 },
+      { name: 'Block 2', dims: '112→56 × 128', firstStep: 4 },
+      { name: 'Block 3', dims: '56→28 × 256', firstStep: 7 },
+      { name: 'Block 4', dims: '28→14 × 512', firstStep: 10 },
+      { name: 'Block 5', dims: '14→7 × 512', firstStep: 13 },
+      { name: 'Flatten', dims: '25,088 × 1', firstStep: 16 },
+      { name: 'Dense NN', dims: '4096 → Out', firstStep: 17 }
+    ];
+
+    let currentStepIndex = 0;
+    let isPlaying = true;
+    let speed = 1.0;
+    let stepProgress = 0;
+    let lastTime = performance.now();
+
+    const stageBar = document.getElementById('stageBar');
+    GROUPS.forEach((g, idx) => {
+      const pill = document.createElement('div');
+      pill.className = 'stage-pill';
+      pill.id = `pill-${idx}`;
+      pill.innerHTML = `
+        <div class="name">${g.name}</div>
+        <div class="dims">${g.dims}</div>
+        <div class="sub-badge" id="badge-${idx}">Ready</div>
+      `;
+      pill.addEventListener('click', () => {
+        currentStepIndex = g.firstStep;
+        stepProgress = 0;
+        updateUI();
+      });
+      stageBar.appendChild(pill);
+    });
+
+    document.getElementById('tabConv').addEventListener('click', () => jumpToSubstep('conv'));
+    document.getElementById('tabRelu').addEventListener('click', () => jumpToSubstep('relu'));
+    document.getElementById('tabPool').addEventListener('click', () => jumpToSubstep('pool'));
+
+    function jumpToSubstep(type) {
+      const st = STAGES[currentStepIndex];
+      if (st.groupIndex >= 1 && st.groupIndex <= 5) {
+        const base = (st.groupIndex - 1) * 3 + 1;
+        if (type === 'conv') currentStepIndex = base;
+        if (type === 'relu') currentStepIndex = base + 1;
+        if (type === 'pool') currentStepIndex = base + 2;
+        stepProgress = 0;
+        updateUI();
+      }
+    }
+
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    playPauseBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      playPauseBtn.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      currentStepIndex = (currentStepIndex - 1 + STAGES.length) % STAGES.length;
+      stepProgress = 0;
+      updateUI();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      currentStepIndex = (currentStepIndex + 1) % STAGES.length;
+      stepProgress = 0;
+      updateUI();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      currentStepIndex = 0;
+      stepProgress = 0;
+      isPlaying = true;
+      playPauseBtn.textContent = '⏸ Pause';
+      updateUI();
+    });
+
+    const speedRange = document.getElementById('speedRange');
+    const speedVal = document.getElementById('speedVal');
+    speedRange.addEventListener('input', (e) => {
+      speed = parseFloat(e.target.value);
+      speedVal.textContent = speed.toFixed(1) + '×';
+    });
+
+    function updateUI() {
+      const st = STAGES[currentStepIndex];
+      document.getElementById('pipelineBadge').textContent = `Current Tensor: ${st.tensor}`;
+      document.getElementById('stageTitle').textContent = st.title;
+      document.getElementById('tensorShapeText').textContent = `Tensor: [${st.tensor}]`;
+      document.getElementById('stageDesc').textContent = st.desc;
+      document.getElementById('mathFormula').textContent = st.math;
+      document.getElementById('opBadge').textContent = st.opLabel;
+
+      GROUPS.forEach((g, idx) => {
+        const pill = document.getElementById(`pill-${idx}`);
+        const badge = document.getElementById(`badge-${idx}`);
+        if (idx === st.groupIndex) {
+          pill.classList.add('active');
+          if (st.subType === 'conv') badge.textContent = '1/3 Conv2D';
+          else if (st.subType === 'relu') badge.textContent = '2/3 ReLU';
+          else if (st.subType === 'pool') badge.textContent = '3/3 MaxPool';
+          else badge.textContent = 'Active';
+        } else {
+          pill.classList.remove('active');
+          badge.textContent = idx < st.groupIndex ? 'Done ✓' : 'Waiting';
+        }
+      });
+
+      const tabConv = document.getElementById('tabConv');
+      const tabRelu = document.getElementById('tabRelu');
+      const tabPool = document.getElementById('tabPool');
+      tabConv.className = 'substep-tab' + (st.subType === 'conv' ? ' active-conv' : '');
+      tabRelu.className = 'substep-tab' + (st.subType === 'relu' ? ' active-relu' : '');
+      tabPool.className = 'substep-tab' + (st.subType === 'pool' ? ' active-pool' : '');
+    }
+
+    const pCanvas = document.getElementById('pipelineCanvas');
+    const pCtx = pCanvas.getContext('2d');
+
+    const BLOCK_NODES = [
+      { label: 'Input', sub: '224×224×3', h: 125, w: 125, d: 10, x: 68, color: '#38bdf8' },
+      { label: 'Block 1', sub: '112×112×64', h: 102, w: 102, d: 22, x: 182, color: '#0ea5e9' },
+      { label: 'Block 2', sub: '56×56×128', h: 80, w: 80, d: 34, x: 288, color: '#6366f1' },
+      { label: 'Block 3', sub: '28×28×256', h: 60, w: 60, d: 48, x: 388, color: '#8b5cf6' },
+      { label: 'Block 4', sub: '14×14×512', h: 44, w: 44, d: 64, x: 488, color: '#a855f7' },
+      { label: 'Block 5', sub: '7×7×512', h: 30, w: 30, d: 74, x: 590, color: '#d946ef' }
+    ];
+
+    function draw3DBox(ctx, cx, cy, h, d, color, isActive, subType, pulse) {
+      const isoX = d * 0.75;
+      const isoY = -d * 0.35;
+      const halfH = h / 2;
+      const frontW = Math.max(16, h * 0.32);
+
+      const x0 = cx - frontW / 2 - isoX / 2;
+      const y0 = cy - halfH - isoY / 2;
+
+      ctx.save();
+      if (isActive) {
+        ctx.shadowColor = subType === 'relu' ? '#f43f5e' : (subType === 'pool' ? '#10b981' : '#22d3ee');
+        ctx.shadowBlur = 18 + Math.sin(pulse * Math.PI * 2) * 8;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0 + frontW, y0);
+      ctx.lineTo(x0 + frontW + isoX, y0 + isoY);
+      ctx.lineTo(x0 + isoX, y0 + isoY);
+      ctx.closePath();
+      ctx.fillStyle = shadeColor(color, 22);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = isActive ? 2 : 1;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x0 + frontW, y0);
+      ctx.lineTo(x0 + frontW + isoX, y0 + isoY);
+      ctx.lineTo(x0 + frontW + isoX, y0 + h + isoY);
+      ctx.lineTo(x0 + frontW, y0 + h);
+      ctx.closePath();
+      ctx.fillStyle = shadeColor(color, -18);
+      ctx.fill();
+      ctx.stroke();
+
+      const slices = Math.min(8, Math.max(2, Math.floor(d / 9)));
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      for (let s = 1; s < slices; s++) {
+        const frac = s / slices;
+        const sx = x0 + frontW + isoX * frac;
+        const sy = y0 + isoY * frac;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx, sy + h);
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.rect(x0, y0, frontW, h);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = isActive ? '#ffffff' : 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = isActive ? 2.2 : 1;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function shadeColor(col, amt) {
+      let num = parseInt(col.replace('#', ''), 16);
+      let r = Math.min(255, Math.max(0, (num >> 16) + amt));
+      let g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+      let b = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function drawPipelineCanvas(st, progress) {
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+      const centerY = 195;
+
+      pCtx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+      pCtx.lineWidth = 1;
+      for (let x = 0; x < pCanvas.width; x += 40) {
+        pCtx.beginPath();
+        pCtx.moveTo(x, 0);
+        pCtx.lineTo(x, pCanvas.height);
+        pCtx.stroke();
+      }
+      for (let y = 0; y < pCanvas.height; y += 40) {
+        pCtx.beginPath();
+        pCtx.moveTo(0, y);
+        pCtx.lineTo(pCanvas.width, y);
+        pCtx.stroke();
+      }
+
+      for (let i = 0; i < BLOCK_NODES.length - 1; i++) {
+        const a = BLOCK_NODES[i];
+        const b = BLOCK_NODES[i + 1];
+        pCtx.strokeStyle = i < st.groupIndex ? 'rgba(34, 211, 238, 0.65)' : 'rgba(148, 163, 184, 0.22)';
+        pCtx.lineWidth = 2;
+        pCtx.beginPath();
+        pCtx.moveTo(a.x + 28, centerY);
+        pCtx.lineTo(b.x - 24, centerY);
+        pCtx.stroke();
+
+        if (i + 1 === st.groupIndex) {
+          const px = (a.x + 28) + ((b.x - 24) - (a.x + 28)) * progress;
+          pCtx.fillStyle = '#22d3ee';
+          pCtx.beginPath();
+          pCtx.arc(px, centerY, 5, 0, Math.PI * 2);
+          pCtx.fill();
+        }
+      }
+
+      BLOCK_NODES.forEach((node, idx) => {
+        const isActive = st.groupIndex === idx;
+        let curH = node.h;
+        let curD = node.d;
+        let activeColor = node.color;
+
+        if (isActive && idx >= 1 && idx <= 5) {
+          const prevNode = BLOCK_NODES[idx - 1];
+          if (st.subType === 'conv') {
+            curH = prevNode.h;
+            curD = prevNode.d + (node.d - prevNode.d) * progress;
+            activeColor = '#38bdf8';
+          } else if (st.subType === 'relu') {
+            curH = prevNode.h;
+            curD = node.d;
+            activeColor = '#f43f5e';
+          } else if (st.subType === 'pool') {
+            curH = prevNode.h + (node.h - prevNode.h) * progress;
+            curD = node.d;
+            activeColor = '#10b981';
+          }
+        }
+
+        draw3DBox(pCtx, node.x, centerY, curH, curD, activeColor, isActive, st.subType, progress);
+
+        pCtx.fillStyle = isActive ? '#ffffff' : '#cbd5e1';
+        pCtx.font = isActive ? 'bold 12px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
+        pCtx.textAlign = 'center';
+        pCtx.fillText(node.label, node.x, 315);
+
+        pCtx.fillStyle = isActive ? '#22d3ee' : '#64748b';
+        pCtx.font = '10px "SF Mono", monospace';
+        pCtx.fillText(node.sub, node.x, 331);
+
+        if (isActive && idx >= 1 && idx <= 5) {
+          const opText = st.subType === 'conv' ? 'Conv 3×3' : (st.subType === 'relu' ? 'ReLU > 0' : 'MaxPool 2×2');
+          const pillColor = st.subType === 'conv' ? '#38bdf8' : (st.subType === 'relu' ? '#f43f5e' : '#10b981');
+          pCtx.fillStyle = pillColor;
+          pCtx.beginPath();
+          pCtx.roundRect(node.x - 38, 42, 76, 22, 6);
+          pCtx.fill();
+          pCtx.fillStyle = '#090d1a';
+          pCtx.font = 'bold 10px -apple-system, sans-serif';
+          pCtx.fillText(opText, node.x, 57);
+        }
+      });
+
+      const flatX = 695;
+      const isFlatten = st.groupIndex === 6;
+      pCtx.strokeStyle = st.groupIndex >= 6 ? 'rgba(34, 211, 238, 0.65)' : 'rgba(148, 163, 184, 0.22)';
+      pCtx.beginPath();
+      pCtx.moveTo(625, centerY);
+      pCtx.lineTo(flatX - 14, centerY);
+      pCtx.stroke();
+
+      pCtx.save();
+      if (isFlatten) {
+        pCtx.shadowColor = '#f59e0b';
+        pCtx.shadowBlur = 16;
+      }
+      pCtx.fillStyle = isFlatten ? '#f59e0b' : '#475569';
+      pCtx.strokeStyle = isFlatten ? '#ffffff' : 'rgba(255,255,255,0.3)';
+      pCtx.lineWidth = isFlatten ? 2 : 1;
+      pCtx.beginPath();
+      pCtx.roundRect(flatX - 9, centerY - 85, 18, 170, 6);
+      pCtx.fill();
+      pCtx.stroke();
+
+      for (let y = centerY - 75; y <= centerY + 75; y += 12) {
+        pCtx.fillStyle = isFlatten ? '#090d1a' : 'rgba(255,255,255,0.25)';
+        pCtx.beginPath();
+        pCtx.arc(flatX, y, 2.2, 0, Math.PI * 2);
+        pCtx.fill();
+      }
+      pCtx.restore();
+
+      pCtx.fillStyle = isFlatten ? '#ffffff' : '#cbd5e1';
+      pCtx.font = isFlatten ? 'bold 12px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
+      pCtx.textAlign = 'center';
+      pCtx.fillText('Flatten', flatX, 315);
+      pCtx.fillStyle = isFlatten ? '#f59e0b' : '#64748b';
+      pCtx.font = '10px "SF Mono", monospace';
+      pCtx.fillText('25,088×1', flatX, 331);
+
+      const isDense = st.groupIndex === 7;
+      const fc1X = 762;
+      const fc2X = 818;
+      const fc1Nodes = [-60, -30, 0, 30, 60];
+      const fc2Nodes = [-45, -15, 15, 45];
+
+      pCtx.strokeStyle = isDense ? 'rgba(16, 185, 129, 0.45)' : 'rgba(148, 163, 184, 0.16)';
+      pCtx.lineWidth = isDense ? 1.3 : 0.8;
+      fc1Nodes.forEach(ny1 => {
+        pCtx.beginPath();
+        pCtx.moveTo(flatX + 9, centerY + ny1 * 0.8);
+        pCtx.lineTo(fc1X, centerY + ny1);
+        pCtx.stroke();
+        fc2Nodes.forEach(ny2 => {
+          pCtx.beginPath();
+          pCtx.moveTo(fc1X, centerY + ny1);
+          pCtx.lineTo(fc2X, centerY + ny2);
+          pCtx.stroke();
+        });
+      });
+
+      fc1Nodes.forEach((ny) => {
+        pCtx.fillStyle = isDense ? '#10b981' : '#64748b';
+        pCtx.beginPath();
+        pCtx.arc(fc1X, centerY + ny, isDense ? 6.5 : 5, 0, Math.PI * 2);
+        pCtx.fill();
+      });
+
+      fc2Nodes.forEach((ny, i) => {
+        pCtx.fillStyle = isDense ? (i === 1 ? '#22d3ee' : '#38bdf8') : '#64748b';
+        pCtx.beginPath();
+        pCtx.arc(fc2X, centerY + ny, isDense ? 7 : 5, 0, Math.PI * 2);
+        pCtx.fill();
+      });
+
+      pCtx.fillStyle = isDense ? '#ffffff' : '#cbd5e1';
+      pCtx.font = isDense ? 'bold 12px -apple-system, sans-serif' : '11px -apple-system, sans-serif';
+      pCtx.fillText('Dense NN', 790, 315);
+      pCtx.fillStyle = isDense ? '#10b981' : '#64748b';
+      pCtx.font = '10px "SF Mono", monospace';
+      pCtx.fillText('4096→1000', 790, 331);
+
+      const totalProg = (currentStepIndex + progress) / STAGES.length;
+      pCtx.fillStyle = 'rgba(255,255,255,0.07)';
+      pCtx.fillRect(30, 365, pCanvas.width - 60, 8);
+      const grad = pCtx.createLinearGradient(30, 0, pCanvas.width - 30, 0);
+      grad.addColorStop(0, '#38bdf8');
+      grad.addColorStop(0.6, '#a855f7');
+      grad.addColorStop(1, '#10b981');
+      pCtx.fillStyle = grad;
+      pCtx.fillRect(30, 365, (pCanvas.width - 60) * totalProg, 8);
+    }
+
+    const mCanvas = document.getElementById('microCanvas');
+    const mCtx = mCanvas.getContext('2d');
+
+    const SAMPLE_MATRIX = [
+      [ 1.2, -0.8,  2.4,  0.5, -1.1,  1.8],
+      [-0.5,  3.1, -1.4,  1.9,  0.4, -0.7],
+      [ 0.9,  1.7,  2.8, -0.6,  2.2,  1.1],
+      [-1.3,  0.4, -0.9,  3.4,  1.5, -0.3],
+      [ 2.1, -0.2,  1.6,  0.8, -1.7,  2.9],
+      [ 0.7,  2.5, -1.2,  1.3,  2.0,  0.6]
+    ];
+
+    function drawMicroCanvas(st, progress) {
+      mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height);
+
+      if (st.subType === 'input') {
+        drawInputRGBView(progress);
+      } else if (st.subType === 'conv') {
+        drawConvView(st, progress);
+      } else if (st.subType === 'relu') {
+        drawReluView(st, progress);
+      } else if (st.subType === 'pool') {
+        drawPoolView(st, progress);
+      } else if (st.subType === 'flatten') {
+        drawFlattenView(st, progress);
+      } else if (st.subType === 'dense') {
+        drawDenseView(st, progress);
+      }
+    }
+
+    function drawInputRGBView(progress) {
+      const channels = [
+        { name: 'Red Channel (R)', color: '#ef4444', offset: -65 },
+        { name: 'Green Channel (G)', color: '#10b981', offset: 0 },
+        { name: 'Blue Channel (B)', color: '#3b82f6', offset: 65 }
+      ];
+      mCtx.textAlign = 'center';
+      mCtx.fillStyle = '#e2e8f0';
+      mCtx.font = 'bold 14px -apple-system, sans-serif';
+      mCtx.fillText('Decomposing 224 × 224 RGB Image into 3 Color Tensors', mCanvas.width / 2, 34);
+
+      const spread = 0.5 + 0.5 * Math.sin(progress * Math.PI);
+      channels.forEach((ch, idx) => {
+        const cx = mCanvas.width / 2 + ch.offset * (0.7 + 0.5 * spread);
+        const cy = 195 + (idx - 1) * 18;
+        const size = 150;
+
+        mCtx.save();
+        mCtx.fillStyle = ch.color + '28';
+        mCtx.strokeStyle = ch.color;
+        mCtx.lineWidth = 2;
+        mCtx.beginPath();
+        mCtx.roundRect(cx - size / 2, cy - size / 2, size, size, 10);
+        mCtx.fill();
+        mCtx.stroke();
+
+        const cells = 6;
+        const cellS = size / cells;
+        for (let r = 0; r < cells; r++) {
+          for (let c = 0; c < cells; c++) {
+            mCtx.strokeStyle = ch.color + '44';
+            mCtx.lineWidth = 1;
+            mCtx.strokeRect(cx - size / 2 + c * cellS, cy - size / 2 + r * cellS, cellS, cellS);
+          }
+        }
+
+        mCtx.fillStyle = ch.color;
+        mCtx.font = 'bold 12px "SF Mono", monospace';
+        mCtx.fillText(ch.name, cx, cy + size / 2 + 22);
+        mCtx.restore();
+      });
+
+      mCtx.fillStyle = '#94a3b8';
+      mCtx.font = '12px "SF Mono", monospace';
+      mCtx.fillText('Input Shape: 224 (Height) × 224 (Width) × 3 (Channels)', mCanvas.width / 2, 365);
+    }
+
+    function drawConvView(st, progress) {
+      mCtx.textAlign = 'center';
+      mCtx.fillStyle = '#38bdf8';
+      mCtx.font = 'bold 14px -apple-system, sans-serif';
+      mCtx.fillText(`Sliding 3×3 Filter Across ${st.inH}×${st.inW}×${st.inC} → ${st.outC} Feature Maps`, mCanvas.width / 2, 30);
+
+      const gridSize = 6;
+      const cell = 38;
+      const startX = 42;
+      const startY = 78;
+
+      const totalSteps = 16;
+      const stepIdx = Math.min(totalSteps - 1, Math.floor(progress * totalSteps));
+      const winR = Math.floor(stepIdx / 4);
+      const winC = stepIdx % 4;
+
+      mCtx.fillStyle = '#cbd5e1';
+      mCtx.font = 'bold 12px -apple-system, sans-serif';
+      mCtx.fillText(`Input Map (${st.inH}×${st.inW})`, startX + (gridSize * cell) / 2, startY - 12);
+
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const inWin = r >= winR && r < winR + 3 && c >= winC && c < winC + 3;
+          const x = startX + c * cell;
+          const y = startY + r * cell;
+          mCtx.fillStyle = inWin ? 'rgba(56, 189, 248, 0.28)' : 'rgba(30, 41, 59, 0.8)';
+          mCtx.fillRect(x, y, cell, cell);
+          mCtx.strokeStyle = inWin ? '#38bdf8' : 'rgba(148, 163, 184, 0.25)';
+          mCtx.lineWidth = inWin ? 2 : 1;
+          mCtx.strokeRect(x, y, cell, cell);
+
+          mCtx.fillStyle = inWin ? '#ffffff' : '#94a3b8';
+          mCtx.font = '11px "SF Mono", monospace';
+          mCtx.fillText(SAMPLE_MATRIX[r][c].toFixed(1), x + cell / 2, y + cell / 2 + 4);
+        }
+      }
+
+      const outStartX = 335;
+      const outStartY = 98;
+      const outCell = 42;
+
+      mCtx.fillStyle = '#cbd5e1';
+      mCtx.font = 'bold 12px -apple-system, sans-serif';
+      mCtx.fillText(`Output Map (${st.outH}×${st.outW}×${st.outC})`, outStartX + (4 * outCell) / 2, outStartY - 12);
+
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const idx = r * 4 + c;
+          const isCurrent = r === winR && c === winC;
+          const isDone = idx <= stepIdx;
+          const x = outStartX + c * outCell;
+          const y = outStartY + r * outCell;
+
+          mCtx.fillStyle = isCurrent
+            ? 'rgba(34, 211, 238, 0.45)'
+            : (isDone ? 'rgba(56, 189, 248, 0.16)' : 'rgba(15, 23, 42, 0.8)');
+          mCtx.fillRect(x, y, outCell, outCell);
+          mCtx.strokeStyle = isCurrent ? '#22d3ee' : 'rgba(148, 163, 184, 0.25)';
+          mCtx.lineWidth = isCurrent ? 2.5 : 1;
+          mCtx.strokeRect(x, y, outCell, outCell);
+
+          if (isDone) {
+            const val = SAMPLE_MATRIX[r + 1][c + 1];
+            mCtx.fillStyle = isCurrent ? '#ffffff' : '#38bdf8';
+            mCtx.font = 'bold 11px "SF Mono", monospace';
+            mCtx.fillText(val.toFixed(1), x + outCell / 2, y + outCell / 2 + 4);
+          }
+        }
+      }
+
+      mCtx.strokeStyle = 'rgba(34, 211, 238, 0.55)';
+      mCtx.setLineDash([4, 4]);
+      mCtx.beginPath();
+      mCtx.moveTo(startX + (winC + 3) * cell, startY + winR * cell);
+      mCtx.lineTo(outStartX + winC * outCell, outStartY + winR * outCell);
+      mCtx.moveTo(startX + (winC + 3) * cell, startY + (winR + 3) * cell);
+      mCtx.lineTo(outStartX + winC * outCell, outStartY + (winR + 1) * outCell);
+      mCtx.stroke();
+      mCtx.setLineDash([]);
+
+      mCtx.fillStyle = '#94a3b8';
+      mCtx.font = '12px "SF Mono", monospace';
+      mCtx.fillText(`Channel Depth increases: ${st.inC} → ${st.outC} filters | Spatial size kept at ${st.outH}×${st.outW}`, mCanvas.width / 2, 360);
+    }
+
+    function drawReluView(st, progress) {
+      mCtx.textAlign = 'center';
+      mCtx.fillStyle = '#f43f5e';
+      mCtx.font = 'bold 14px -apple-system, sans-serif';
+      mCtx.fillText(`ReLU Non-Linearity: Negative Values → 0, Positive Kept (${st.outH}×${st.outW}×${st.outC})`, mCanvas.width / 2, 30);
+
+      const gridSize = 6;
+      const cell = 42;
+      const startX = 36;
+      const startY = 72;
+      const thresholdCell = Math.floor(progress * gridSize * gridSize);
+
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const idx = r * gridSize + c;
+          const rawVal = SAMPLE_MATRIX[r][c];
+          const processed = idx <= thresholdCell;
+          const finalVal = processed ? Math.max(0, rawVal) : rawVal;
+
+          const x = startX + c * cell;
+          const y = startY + r * cell;
+
+          if (rawVal < 0) {
+            mCtx.fillStyle = processed ? 'rgba(15, 23, 42, 0.95)' : 'rgba(244, 63, 94, 0.32)';
+            mCtx.strokeStyle = processed ? 'rgba(148, 163, 184, 0.2)' : '#f43f5e';
+          } else {
+            mCtx.fillStyle = processed ? 'rgba(16, 185, 129, 0.28)' : 'rgba(56, 189, 248, 0.15)';
+            mCtx.strokeStyle = processed ? '#10b981' : 'rgba(148, 163, 184, 0.3)';
+          }
+
+          mCtx.lineWidth = idx === thresholdCell ? 2.5 : 1;
+          mCtx.fillRect(x, y, cell, cell);
+          mCtx.strokeRect(x, y, cell, cell);
+
+          mCtx.fillStyle = rawVal < 0 && processed ? '#475569' : '#f8fafc';
+          mCtx.font = 'bold 11px "SF Mono", monospace';
+          mCtx.fillText(finalVal.toFixed(1), x + cell / 2, y + cell / 2 + 4);
+        }
+      }
+
+      const gx = 395, gy = 210, gRadius = 85;
+      mCtx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      mCtx.lineWidth = 1.5;
+      mCtx.beginPath();
+      mCtx.moveTo(gx - gRadius, gy);
+      mCtx.lineTo(gx + gRadius, gy);
+      mCtx.moveTo(gx, gy - gRadius);
+      mCtx.lineTo(gx, gy + gRadius);
+      mCtx.stroke();
+
+      mCtx.strokeStyle = '#f43f5e';
+      mCtx.lineWidth = 3.5;
+      mCtx.beginPath();
+      mCtx.moveTo(gx - gRadius, gy);
+      mCtx.lineTo(gx, gy);
+      mCtx.lineTo(gx + gRadius, gy - gRadius);
+      mCtx.stroke();
+
+      mCtx.fillStyle = '#e2e8f0';
+      mCtx.font = 'bold 12px "SF Mono", monospace';
+      mCtx.fillText('f(x) = max(0, x)', gx, gy - gRadius - 15);
+      mCtx.fillStyle = '#94a3b8';
+      mCtx.font = '11px -apple-system, sans-serif';
+      mCtx.fillText('x < 0 → 0', gx - 45, gy + 22);
+      mCtx.fillText('x > 0 → x', gx + 45, gy - 25);
+
+      mCtx.fillStyle = '#94a3b8';
+      mCtx.font = '12px "SF Mono", monospace';
+      mCtx.fillText(`All ${st.outC} channels rectified in-place | Tensor stays ${st.outH}×${st.outW}×${st.outC}`, mCanvas.width / 2, 362);
+    }
+
+    function drawPoolView(st, progress) {
+      mCtx.textAlign = 'center';
+      mCtx.fillStyle = '#10b981';
+      mCtx.font = 'bold 14px -apple-system, sans-serif';
+      mCtx.fillText(`2×2 Max Pooling (Stride 2): Spatial Size Halves ${st.inH}×${st.inW} → ${st.outH}×${st.outW}`, mCanvas.width / 2, 30);
+
+      const gridSize = 6;
+      const cell = 38;
+      const startX = 40;
+      const startY = 78;
+
+      const totalWins = 9;
+      const winIdx = Math.min(totalWins - 1, Math.floor(progress * totalWins));
+      const poolR = Math.floor(winIdx / 3);
+      const poolC = winIdx % 3;
+
+      const COLORS = ['#38bdf8', '#a855f7', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+      mCtx.fillStyle = '#cbd5e1';
+      mCtx.font = 'bold 12px -apple-system, sans-serif';
+      mCtx.fillText(`Before Pool (${st.inH}×${st.inW})`, startX + (gridSize * cell) / 2, startY - 12);
+
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const pr = Math.floor(r / 2);
+          const pc = Math.floor(c / 2);
+          const pIdx = pr * 3 + pc;
+          const isCurrentWin = pr === poolR && pc === poolC;
+          const val = Math.max(0, SAMPLE_MATRIX[r][c]);
+
+          const x = startX + c * cell;
+          const y = startY + r * cell;
+
+          mCtx.fillStyle = isCurrentWin ? COLORS[pIdx] + '44' : 'rgba(30, 41, 59, 0.75)';
+          mCtx.fillRect(x, y, cell, cell);
+          mCtx.strokeStyle = isCurrentWin ? COLORS[pIdx] : 'rgba(148, 163, 184, 0.25)';
+          mCtx.lineWidth = isCurrentWin ? 2 : 1;
+          mCtx.strokeRect(x, y, cell, cell);
+
+          mCtx.fillStyle = isCurrentWin ? '#ffffff' : '#94a3b8';
+          mCtx.font = '11px "SF Mono", monospace';
+          mCtx.fillText(val.toFixed(1), x + cell / 2, y + cell / 2 + 4);
+        }
+      }
+
+      const outStartX = 345;
+      const outStartY = 112;
+      const outCell = 52;
+
+      mCtx.fillStyle = '#cbd5e1';
+      mCtx.font = 'bold 12px -apple-system, sans-serif';
+      mCtx.fillText(`After 2×2 MaxPool (${st.outH}×${st.outW})`, outStartX + (3 * outCell) / 2, outStartY - 12);
+
+      for (let pr = 0; pr < 3; pr++) {
+        for (let pc = 0; pc < 3; pc++) {
+          const pIdx = pr * 3 + pc;
+          const isDone = pIdx <= winIdx;
+          const isCurrent = pIdx === winIdx;
+
+          const m00 = Math.max(0, SAMPLE_MATRIX[pr * 2][pc * 2]);
+          const m01 = Math.max(0, SAMPLE_MATRIX[pr * 2][pc * 2 + 1]);
+          const m10 = Math.max(0, SAMPLE_MATRIX[pr * 2 + 1][pc * 2]);
+          const m11 = Math.max(0, SAMPLE_MATRIX[pr * 2 + 1][pc * 2 + 1]);
+          const maxVal = Math.max(m00, m01, m10, m11);
+
+          const x = outStartX + pc * outCell;
+          const y = outStartY + pr * outCell;
+
+          mCtx.fillStyle = isDone ? COLORS[pIdx] + (isCurrent ? '66' : '28') : 'rgba(15, 23, 42, 0.8)';
+          mCtx.fillRect(x, y, outCell, outCell);
+          mCtx.strokeStyle = isDone ? COLORS[pIdx] : 'rgba(148, 163, 184, 0.25)';
+          mCtx.lineWidth = isCurrent ? 2.5 : 1.2;
+          mCtx.strokeRect(x, y, outCell, outCell);
+
+          if (isDone) {
+            mCtx.fillStyle = '#ffffff';
+            mCtx.font = 'bold 13px "SF Mono", monospace';
+            mCtx.fillText(maxVal.toFixed(1), x + outCell / 2, y + outCell / 2 + 5);
+          }
+        }
+      }
+
+      mCtx.fillStyle = '#10b981';
+      mCtx.font = 'bold 12px "SF Mono", monospace';
+      mCtx.fillText(`Spatial Dimensions Halved: ${st.inH}×${st.inW} → ${st.outH}×${st.outW} (Depth = ${st.outC})`, mCanvas.width / 2, 362);
+    }
+
+    function drawFlattenView(st, progress) {
+      mCtx.textAlign = 'center';
+      mCtx.fillStyle = '#f59e0b';
+      mCtx.font = 'bold 14px -apple-system, sans-serif';
+      mCtx.fillText('Flattening 7 × 7 × 512 Volume into 25,088 × 1 Feature Vector', mCanvas.width / 2, 30);
+
+      const startX = 75, startY = 125, cell = 30;
+      const totalCells = 12;
+      const activeIdx = Math.floor(progress * totalCells);
+
+      for (let layer = 2; layer >= 0; layer--) {
+        const ox = layer * 16;
+        const oy = -layer * 12;
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            const x = startX + c * cell + ox;
+            const y = startY + r * cell + oy;
+            mCtx.fillStyle = layer === 0 ? 'rgba(217, 70, 239, 0.35)' : 'rgba(139, 92, 246, 0.2)';
+            mCtx.strokeStyle = '#d946ef';
+            mCtx.lineWidth = 1;
+            mCtx.fillRect(x, y, cell, cell);
+            mCtx.strokeRect(x, y, cell, cell);
+          }
+        }
+      }
+
+      mCtx.fillStyle = '#cbd5e1';
+      mCtx.font = '12px "SF Mono", monospace';
+      mCtx.fillText('7 × 7 × 512 Tensor', startX + 75, 290);
+
+      const vecX = 385;
+      const vecTop = 62;
+      const slotH = 22;
+
+      for (let i = 0; i < totalCells; i++) {
+        const y = vecTop + i * slotH;
+        const filled = i <= activeIdx;
+        mCtx.fillStyle = filled ? 'rgba(245, 158, 11, 0.35)' : 'rgba(30, 41, 59, 0.7)';
+        mCtx.strokeStyle = filled ? '#f59e0b' : 'rgba(148, 163, 184, 0.25)';
+        mCtx.lineWidth = i === activeIdx ? 2 : 1;
+        mCtx.fillRect(vecX, y, 90, slotH - 3);
+        mCtx.strokeRect(vecX, y, 90, slotH - 3);
+
+        mCtx.fillStyle = filled ? '#ffffff' : '#64748b';
+        mCtx.font = '10px "SF Mono", monospace';
+        const label = i === 10 ? '... (25,088)' : `x[${i === 11 ? 25087 : i}]`;
+        mCtx.fillText(label, vecX + 45, y + 13);
+      }
+
+      mCtx.strokeStyle = '#f59e0b';
+      mCtx.lineWidth = 2;
+      mCtx.beginPath();
+      mCtx.moveTo(235, 185);
+      mCtx.quadraticCurveTo(310, 120, vecX - 12, vecTop + activeIdx * slotH + 8);
+      mCtx.stroke();
+
+      mCtx.fillStyle = '#f59e0b';
+      mCtx.font = 'bold 12px "SF Mono", monospace';
+      mCtx.fillText('7 × 7 × 512 = 25,088 Features Unrolled into 1D Vector', mCanvas.width / 2, 365);
+    }
+
+    function drawDenseView(st, progress) {
+      mCtx.textAlign = 'center';
+      mCtx.fillStyle = '#10b981';
+      mCtx.font = 'bold 14px -apple-system, sans-serif';
+      mCtx.fillText('Dense Neural Network: 25,088 → 4096 → 4096 → Softmax Output', mCanvas.width / 2, 30);
+
+      const layers = [
+        { name: 'Flatten\n(25,088)', x: 70, nodes: 7, color: '#f59e0b' },
+        { name: 'Dense + ReLU\n(4,096)', x: 195, nodes: 6, color: '#38bdf8' },
+        { name: 'Dense + ReLU\n(4,096)', x: 320, nodes: 5, color: '#a855f7' },
+        { name: 'Softmax\n(Classes)', x: 435, nodes: 4, color: '#10b981' }
+      ];
+
+      const centerY = 195;
+      const spacing = 36;
+
+      for (let l = 0; l < layers.length - 1; l++) {
+        const L1 = layers[l];
+        const L2 = layers[l + 1];
+        for (let i = 0; i < L1.nodes; i++) {
+          const y1 = centerY + (i - (L1.nodes - 1) / 2) * spacing;
+          for (let j = 0; j < L2.nodes; j++) {
+            const y2 = centerY + (j - (L2.nodes - 1) / 2) * spacing;
+            mCtx.strokeStyle = 'rgba(148, 163, 184, 0.18)';
+            mCtx.lineWidth = 1;
+            mCtx.beginPath();
+            mCtx.moveTo(L1.x, y1);
+            mCtx.lineTo(L2.x, y2);
+            mCtx.stroke();
+          }
+        }
+      }
+
+      const activeLayerFloat = progress * (layers.length - 1);
+      const activeL = Math.min(layers.length - 2, Math.floor(activeLayerFloat));
+      const subP = activeLayerFloat - activeL;
+      const L1 = layers[activeL];
+      const L2 = layers[activeL + 1];
+
+      for (let i = 0; i < L1.nodes; i++) {
+        const y1 = centerY + (i - (L1.nodes - 1) / 2) * spacing;
+        const j = i % L2.nodes;
+        const y2 = centerY + (j - (L2.nodes - 1) / 2) * spacing;
+        const px = L1.x + (L2.x - L1.x) * subP;
+        const py = y1 + (y2 - y1) * subP;
+        mCtx.fillStyle = '#22d3ee';
+        mCtx.beginPath();
+        mCtx.arc(px, py, 4, 0, Math.PI * 2);
+        mCtx.fill();
+      }
+
+      layers.forEach((L) => {
+        for (let i = 0; i < L.nodes; i++) {
+          const y = centerY + (i - (L.nodes - 1) / 2) * spacing;
+          mCtx.fillStyle = L.color;
+          mCtx.beginPath();
+          mCtx.arc(L.x, y, 9, 0, Math.PI * 2);
+          mCtx.fill();
+          mCtx.strokeStyle = '#ffffff';
+          mCtx.lineWidth = 1.5;
+          mCtx.stroke();
+        }
+        const lines = L.name.split('\n');
+        mCtx.fillStyle = '#e2e8f0';
+        mCtx.font = 'bold 11px -apple-system, sans-serif';
+        mCtx.fillText(lines[0], L.x, 325);
+        mCtx.fillStyle = L.color;
+        mCtx.font = '10px "SF Mono", monospace';
+        mCtx.fillText(lines[1], L.x, 340);
+      });
+
+      const probs = [
+        { label: 'Class 1', p: 0.78 },
+        { label: 'Class 2', p: 0.12 },
+        { label: 'Class 3', p: 0.06 },
+        { label: 'Class 4', p: 0.04 }
+      ];
+      probs.forEach((item, i) => {
+        const y = centerY + (i - 1.5) * spacing;
+        mCtx.fillStyle = 'rgba(255,255,255,0.1)';
+        mCtx.fillRect(452, y - 6, 55, 12);
+        mCtx.fillStyle = i === 0 ? '#10b981' : '#38bdf8';
+        mCtx.fillRect(452, y - 6, 55 * item.p, 12);
+        mCtx.fillStyle = '#e2e8f0';
+        mCtx.font = '10px "SF Mono", monospace';
+        mCtx.textAlign = 'left';
+        mCtx.fillText(`${Math.round(item.p * 100)}%`, 512, y + 4);
+      });
+    }
+
+    function animate(now) {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      if (isPlaying) {
+        stepProgress += (dt * speed) / 3.2;
+        if (stepProgress >= 1.0) {
+          stepProgress = 0;
+          currentStepIndex = (currentStepIndex + 1) % STAGES.length;
+          updateUI();
+        }
+      }
+
+      const st = STAGES[currentStepIndex];
+      drawPipelineCanvas(st, stepProgress);
+      drawMicroCanvas(st, stepProgress);
+
+      requestAnimationFrame(animate);
+    }
+
+    updateUI();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
