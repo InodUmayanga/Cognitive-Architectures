@@ -1,5 +1,11 @@
 # 5-Block CNN Architecture Moving Animation
 
+### 🚀 [▶ Click Here to Launch the Interactive CNN Animation in Your Browser](https://htmlpreview.github.io/?https://github.com/InodUmayanga/Cognitive-Architectures/blob/main/index.html)
+
+*(Also available on GitHub Pages at [https://inodumayanga.github.io/Cognitive-Architectures/](https://inodumayanga.github.io/Cognitive-Architectures/))*
+
+[![5-Block CNN Architecture Moving Animation](./cnn_animation.svg)](https://htmlpreview.github.io/?https://github.com/InodUmayanga/Cognitive-Architectures/blob/main/index.html)
+
 Interactive HTML5 Canvas web animation illustrating a 5-block Convolutional Neural Network (CNN) starting from a `224×224×3` RGB image through Convolution (`3×3`), ReLU activation (`max(0, x)`), `2×2` Max Pooling (stride 2), Flattening (`25,088×1`), and a Dense Neural Network (`4096 → 4096 → 1000` Softmax).
 
 ## Features
@@ -30,13 +36,3 @@ python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
 Then open [http://127.0.0.1:8765](http://127.0.0.1:8765) in your browser, or open `index.html` directly.
-
-## Publishing to GitHub & GitHub Pages
-
-1. Create a new repository on GitHub.
-2. Link your remote repository and push the `main` branch:
-   ```bash
-   git remote add origin https://github.com/<your-username>/<your-repo>.git
-   git push -u origin main
-   ```
-3. To host the live animation on **GitHub Pages**, go to **Settings → Pages** in your GitHub repository and select the `main` branch (`/ (root)` folder).
